@@ -1,0 +1,40 @@
+name: Observateur Actif - Daily Video
+
+on:
+  schedule:
+    # Exécution tous les jours à 8h00 UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Permet de lancer manuellement pour tester
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+      
+      - name: Installation de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Installation de FFmpeg (requis par MoviePy)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      
+      - name: Installation des dépendances Python
+        run: pip install -r requirements.txt
+      
+      - name: Exécution du pipeline de création vidéo
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: python main.py
+      
+      # Optionnel : Upload vers YouTube
+      # Décommente et configure cette étape si tu as mis en place l'authentification.
+      # - name: Upload vers YouTube
+      #   env:
+      #     YOUTUBE_CLIENT_SECRETS: ${{ secrets.YOUTUBE_CLIENT_SECRETS }}
+      #     YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      #   run: python modules/youtube_uploader.py
