@@ -1,0 +1,6 @@
+google-generativeai
+edge-tts
+pexels-sdk
+moviepy
+requests
+python-dotenv
