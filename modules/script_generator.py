@@ -6,6 +6,7 @@ from google.genai import types
 from google.genai.errors import ServerError
 
 def generer_script(sujet):
+    """Génère un script captivant en gérant les surcharges de l'API Gemini."""
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
     prompt = f"""Tu es un scénariste pour une chaîne YouTube de mystères et d'histoires insolites africaines nommée "Observateur Actif".
@@ -35,4 +36,4 @@ Fournis la réponse UNIQUEMENT sous la forme d'un objet JSON valide, avec la str
             if attempt == max_retries - 1:
                 print("❌ Abandon après plusieurs tentatives. Réessaie plus tard.")
                 raise e
-            time.sleep(15) # On attend 15 secondes avant de réessayer
+            time.sleep(15)
