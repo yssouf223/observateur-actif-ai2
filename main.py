@@ -35,14 +35,14 @@ async def pipeline_creation_video():
     if not chemins_visuels:
         raise Exception("❌ Aucune image générée, arrêt du pipeline.")
 
-    # 5. Assemblage de la vidéo (avec texte pour les sous-titres)
+    # 5. Assemblage de la vidéo (la musique sera cherchée dans assets/music/)
     chemin_video = "output/short_final.mp4"
     assembler_video(
-        chemins_visuels, 
-        chemin_audio, 
-        chemin_video, 
+        chemins_visuels,
+        chemin_audio,
+        chemin_video,
         script_data['titre'],
-        script_data['script'] # On passe le texte pour les sous-titres
+        script_data['script']
     )
     print(f"🎬 Vidéo finale prête : {chemin_video}")
 
