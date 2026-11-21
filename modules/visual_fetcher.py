@@ -1,57 +1,43 @@
 import os
-import asyncio
-from putergenai import PuterClient
 import requests
 import time
+import urllib.parse
 
-# Modèle d'image. Tu peux essayer "dall-e-3" ou "flux" si tu veux.
-MODELE_IMAGE = "pollinations-image"
-
-async def _generer_une_image(client, prompt, chemin_sortie):
-    """Fonction interne pour générer une seule image."""
-    try:
-        print(f"🎨 Génération de l'image pour : '{prompt}'...")
-        image_url = await client.ai_txt2img(prompt, model=MODELE_IMAGE)
-
-        response = requests.get(image_url, timeout=60)
-        if response.status_code == 200:
-            with open(chemin_sortie, 'wb') as f:
-                f.write(response.content)
-            print(f"✅ Image sauvegardée : {chemin_sortie}")
-            return chemin_sortie
-        else:
-            print(f"⚠️ Impossible de télécharger l'image depuis {image_url}")
-            return None
-    except Exception as e:
-        print(f"❌ Erreur lors de la génération pour '{prompt}': {e}")
-        return None
-
-async def chercher_visuels(mots_cles):
+def chercher_visuels(mots_cles):
     """
-    Génère des images via Puter.js en utilisant le token stocké
-    dans la variable d'environnement PUTER_TOKEN.
+    Génère et télécharge des images via l'API gratuite et anonyme de Pollinations.ai.
+    Prend une liste de mots-clés (en anglais) et génère une image pour chacun.
     """
     chemins_images = []
     os.makedirs("output/visuels", exist_ok=True)
 
-    token = os.environ.get("PUTER_TOKEN")
+    for i, mot in enumerate(mots_cles):
+        # On construit un prompt descriptif pour guider l'IA
+        prompt = f"{mot}, style sombre et mystérieux, éclairage cinématographique, haute qualité"
+        prompt_encode = urllib.parse.quote(prompt)
+        
+        # L'URL de l'API Pollinations (pas de clé nécessaire)
+        url_image = f"https://image.pollinations.ai/prompt/{prompt_encode}?width=1024&height=1024&nologo=true&seed={i}"
 
-    if not token:
-        print("❌ ERREUR : Le token Puter (PUTER_TOKEN) n'est pas défini.")
-        return []
+        try:
+            print(f"🎨 Génération de l'image pour : '{mot}'...")
+            response = requests.get(url_image, timeout=60)
+            
+            if response.status_code == 200:
+                chemin_image = f"output/visuels/img_generee_{i}.jpg"
+                with open(chemin_image, 'wb') as f:
+                    f.write(response.content)
+                chemins_images.append(chemin_image)
+                print(f"✅ Image sauvegardée : {chemin_image}")
+            else:
+                print(f"⚠️ Échec de la génération (code {response.status_code}) pour '{mot}'")
+        
+        except Exception as e:
+            print(f"❌ Erreur lors de la génération pour '{mot}': {e}")
 
-    async with PuterClient(token=token) as client:
-        print("✅ Client Puter initialisé avec le token.")
-
-        for i, mot in enumerate(mots_cles):
-            prompt = f"{mot}, style sombre et mystérieux, éclairage cinématographique, haute qualité, illustration"
-            chemin_image = f"output/visuels/img_generee_{i}.jpg"
-
-            resultat = await _generer_une_image(client, prompt, chemin_image)
-            if resultat:
-                chemins_images.append(resultat)
-
-            if i < len(mots_cles) - 1:
-                time.sleep(3)  # Pause pour ne pas surcharger l'API
+        # Pause de 5 secondes entre chaque requête pour respecter les limites
+        if i < len(mots_cles) - 1:
+            print("⏳ Pause de 5 secondes...")
+            time.sleep(5)
 
     return chemins_images
