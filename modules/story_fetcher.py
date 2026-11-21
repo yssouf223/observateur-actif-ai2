@@ -1,22 +1,39 @@
+import os
 import random
-
-SUJETS = [
-    "La cité perdue de Djenné-Djenno au Mali",
-    "Les mystérieux cercles de pierres de Senegambia",
-    "La légende du peuple Dogon et de Sirius B",
-    "Les tombeaux étranges de l'île de Gorée",
-    "Le mythe du serpent-dieu Damballa et ses origines africaines",
-    "Les gravures rupestres inexpliquées du Sahara",
-    "L'histoire du royaume fantôme du Kongo",
-    "Les esprits de la forêt sacrée de la Casamance",
-    "Le trésor caché de l'empereur Mansa Moussa du Mali",
-    "Les pratiques mystérieuses du peuple Himba en Namibie",
-    "La malédiction de la reine de Saba",
-    "Les masques sacrés du peuple Yoruba",
-    "Le mystère des églises taillées dans la roche de Lalibela en Éthiopie",
-    "La légende du crocodile sacré de Sabou au Burkina Faso",
-    "Les chants hypnotiques des pêcheurs du fleuve Niger"
-]
+from google import genai
 
 def choisir_sujet():
-    return random.choice(SUJETS)
+    """Demande à Gemini d'inventer un sujet inédit sur l'Afrique."""
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    
+    # On donne des thèmes variés pour ne pas tourner en rond
+    themes = [
+        "un mythe ou une légende oubliée", 
+        "un lieu mystérieux ou un monument étrange", 
+        "un personnage historique énigmatique", 
+        "une créature ou un esprit du folklore", 
+        "un rituel ou une tradition insolite",
+        "un trésor perdu ou une cité disparue"
+    ]
+    theme = random.choice(themes)
+    
+    prompt = f"""Tu es un chercheur spécialiste des mystères et de l'insolite en Afrique.
+Trouve un sujet fascinant, méconnu et mystérieux concernant {theme} en Afrique.
+Donne-moi UNIQUEMENT le nom de ce sujet, sous forme d'une phrase courte de 5 à 10 mots (en français).
+Ne mets pas de ponctuation, ni de guillemets, ni de texte avant ou après.
+Exemple : Le mystère des cercueils suspendus de Sagada (non, ça c'est en Asie, trouve en Afrique)
+Exemple : La légende des mines du roi Salomon en Éthiopie
+"""
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt,
+        )
+        sujet = response.text.strip()
+        # On nettoie au cas où l'IA aurait mis des guillemets
+        sujet = sujet.replace('"', '').replace("'", "").replace(".", "")
+        return sujet
+    except Exception as e:
+        print(f"⚠️ Erreur lors de la recherche du sujet : {e}")
+        # En cas de problème, on utilise un sujet de secours
+        return "Le mystère non résolu des gravures rupestres du Tassili n'Ajjer"
