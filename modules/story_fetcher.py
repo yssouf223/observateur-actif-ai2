@@ -1,7 +1,5 @@
 import random
 
-# Liste de sujets d'histoires mystérieuses et insolites d'Afrique.
-# Tu peux enrichir cette liste avec tes propres trouvailles.
 SUJETS = [
     "La cité perdue de Djenné-Djenno au Mali",
     "Les mystérieux cercles de pierres de Senegambia",
