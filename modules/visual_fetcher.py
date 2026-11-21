@@ -10,19 +10,17 @@ CF_API_TOKEN = os.environ.get("CF_API_TOKEN")
 CF_MODEL = "@cf/black-forest-labs/flux-1-schnell"
 
 def _generer_image_cloudflare(prompt, i):
-    """Génère une image via Cloudflare Workers AI (FLUX.1-schnell)."""
     if not CF_ACCOUNT_ID or not CF_API_TOKEN:
-        print("❌ ERREUR : Les identifiants Cloudflare (CF_ACCOUNT_ID, CF_API_TOKEN) ne sont pas définis.")
+        print("❌ ERREUR : Les identifiants Cloudflare ne sont pas définis.")
         return None
 
     url = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}/ai/run/{CF_MODEL}"
     headers = {"Authorization": f"Bearer {CF_API_TOKEN}"}
+    
+    # L'API Cloudflare pour FLUX.1-schnell utilise "prompt" et "steps"
     payload = {
         "prompt": prompt,
-        "num_steps": 4,
-        "width": 1080,
-        "height": 1920,
-        "response_format": "b64_json"
+        "steps": 4
     }
 
     try:
@@ -43,7 +41,6 @@ def _generer_image_cloudflare(prompt, i):
     return None
 
 def _generer_image_secours(i):
-    """Image de secours (Picsum) si Cloudflare échoue."""
     try:
         url = f"https://picsum.photos/1080/1920?random={i}"
         r = requests.get(url, timeout=20)
@@ -55,9 +52,8 @@ def _generer_image_secours(i):
 
 def _generer_une(args):
     mot, i, chemin = args
-    prompt = f"{mot}, style sombre, mystérieux, éclairage cinématographique, haute qualité, très détaillé"
+    prompt = f"{mot}, style sombre, mystérieux, éclairage cinématographique, haute qualité"
 
-    # 1) Tentative principale : Cloudflare Workers AI
     contenu = _generer_image_cloudflare(prompt, i)
     if contenu:
         with open(chemin, 'wb') as f:
@@ -65,7 +61,6 @@ def _generer_une(args):
         print(f"✅ Image {i+1} générée via Cloudflare AI.")
         return chemin
 
-    # 2) Secours : Image aléatoire
     print(f"🔄 Basculement sur l'image de secours pour le slot {i+1}...")
     contenu = _generer_image_secours(i)
     if contenu:
@@ -74,13 +69,13 @@ def _generer_une(args):
         print(f"✅ Image de secours {i+1} sauvegardée.")
         return chemin
 
-    print(f"❌ Impossible de générer l'image {i+1}")
     return None
 
 def chercher_visuels(mots_cles):
     os.makedirs("output/visuels", exist_ok=True)
-
-    total_images = 6
+    total_images = 6 
+    
+    # On s'assure d'avoir 6 mots-clés
     base = list(mots_cles) if mots_cles else ["Africa mystery"]
     mots_etendus = []
     while len(mots_etendus) < total_images:
@@ -92,12 +87,11 @@ def chercher_visuels(mots_cles):
     chemins = []
     print(f"🎨 Génération de {total_images} images via Cloudflare AI...")
     
-    # On limite à 2 workers pour respecter les limites de débit
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         for result in ex.map(_generer_une, tasks):
             if result:
                 chemins.append(result)
             time.sleep(2)
 
-    print(f"🖼️ Total : {len(chemins)} images récupérées sur {total_images}.")
+    print(f"🖼️ Total : {len(chemins)} images récupérées.")
     return chemins
