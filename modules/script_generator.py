@@ -1,11 +1,13 @@
 import os
 import json
 import time
+import httpx
 from google import genai
 from google.genai import types
 from google.genai.errors import ServerError
 
 def generer_script(sujet):
+    """Génère un script captivant en gérant les surcharges et coupures réseau."""
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
     prompt = f"""Tu es un scénariste pour une chaîne YouTube de mystères et d'histoires insolites africaines nommée "Observateur Actif".
@@ -24,14 +26,15 @@ Fournis la réponse UNIQUEMENT sous la forme d'un objet JSON valide, avec la str
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
-                model="gemini-3.8-flash", # Modèle confirmé par l'erreur précédente
+                model="gemini-3.8-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json"),
             )
             return json.loads(response.text)
             
-        except ServerError as e:
-            print(f"⚠️ Serveur Gemini surchargé (Essai {attempt + 1}/{max_retries}). Attente de 15 secondes...")
+        except (ServerError, httpx.RemoteProtocolError, httpx.TimeoutException) as e:
+            print(f"⚠️ Problème réseau ou serveur Gemini surchargé (Essai {attempt + 1}/{max_retries}). Attente de 15 secondes...")
+            print(f"   Détail : {type(e).__name__}")
             if attempt == max_retries - 1:
                 print("❌ Abandon après plusieurs tentatives. Réessaie plus tard.")
                 raise e
