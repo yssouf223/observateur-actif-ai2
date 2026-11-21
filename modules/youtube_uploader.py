@@ -1,63 +1,60 @@
 import os
-import pickle
-from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-def upload_video(file_path, title, description, tags):
-    """Upload une vidéo sur YouTube en utilisant les identifiants stockés."""
-    # Chargement des identifiants (le refresh token est stocké dans le fichier)
-    # En production, le fichier pickle est généré après la première autorisation manuelle.
-    credentials = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            credentials = pickle.load(token)
+def uploader_video(chemin_video, titre, description, tags):
+    """Upload une vidéo sur YouTube en utilisant les secrets GitHub."""
     
-    if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-        else:
-            raise Exception("Authentification YouTube requise. Exécutez le script d'autorisation initial.")
-    
+    client_id = os.environ.get("YOUTUBE_CLIENT_ID")
+    client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET")
+    refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN")
+
+    if not all([client_id, client_secret, refresh_token]):
+        print("❌ ERREUR : Les identifiants YouTube ne sont pas tous définis dans les secrets.")
+        return None
+
+    # Création des identifiants avec le Refresh Token
+    creds = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=["https://www.googleapis.com/auth/youtube.upload"]
+    )
+
     # Construction du client YouTube
-    youtube = build('youtube', 'v3', credentials=credentials)
-    
-    # Préparation des métadonnées de la vidéo
+    youtube = build("youtube", "v3", credentials=creds)
+
+    # Préparation des métadonnées
     body = {
-        'snippet': {
-            'title': title,
-            'description': description,
-            'tags': tags,
-            'categoryId': '24'  # 24 = Entertainment, à ajuster selon la catégorie
+        "snippet": {
+            "title": titre[:100], # Limite YouTube
+            "description": description[:5000], # Limite YouTube
+            "tags": tags,
+            "categoryId": "24" # 24 = Entertainment
         },
-        'status': {
-            'privacyStatus': 'public',  # 'private', 'public', 'unlisted'
-            'selfDeclaredMadeForKids': False
+        "status": {
+            "privacyStatus": "public", # "private" pour tester sans publier
+            "selfDeclaredMadeForKids": False
         }
     }
-    
-    # Upload de la vidéo
-    media = MediaFileUpload(file_path, chunksize=-1, resumable=True)
+
+    # Upload avec reprise en cas de coupure
+    media = MediaFileUpload(chemin_video, chunksize=-1, resumable=True)
     request = youtube.videos().insert(
-        part='snippet,status',
+        part="snippet,status",
         body=body,
         media_body=media
     )
-    
+
+    print("📤 Upload de la vidéo sur YouTube en cours...")
     response = None
     while response is None:
         status, response = request.next_chunk()
         if status:
-            print(f"Uploadé {int(status.progress() * 100)}%")
-    
-    print(f"✅ Vidéo uploadée avec succès ! ID: {response['id']}")
-    return response['id']
+            print(f"   Progression : {int(status.progress() * 100)}%")
 
-# Exemple d'utilisation (à adapter dans main.py)
-# if __name__ == "__main__":
-#     upload_video(
-#         "output/short_final.mp4",
-#         "Titre de la vidéo",
-#         "Description générée par l'IA",
-#         ["mystère", "afrique", "insolite"]
-#     )
+    print(f"✅ Vidéo publiée avec succès ! ID YouTube : {response['id']}")
+    return response["id"]
