@@ -8,6 +8,7 @@ from modules.script_generator import generer_script
 from modules.voice_generator import generer_voix
 from modules.visual_fetcher import chercher_visuels
 from modules.video_composer import assembler_video
+from modules.youtube_uploader import uploader_video # NOUVEAU
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ async def pipeline_creation_video():
     if not chemins_visuels:
         raise Exception("❌ Aucune image générée, arrêt du pipeline.")
 
-    # 5. Assemblage de la vidéo (la musique sera cherchée dans assets/music/)
+    # 5. Assemblage de la vidéo
     chemin_video = "output/short_final.mp4"
     assembler_video(
         chemins_visuels,
@@ -45,6 +46,17 @@ async def pipeline_creation_video():
         script_data['script']
     )
     print(f"🎬 Vidéo finale prête : {chemin_video}")
+
+    # 6. PUBLICATION YOUTUBE (NOUVEAU)
+    description = f"Découvrez l'histoire mystérieuse de : {sujet}.\n\n#ObservateurActif #Afrique #Mystère #Insolite"
+    tags = ["Afrique", "mystère", "insolite", "Observateur Actif", "histoire"]
+    
+    uploader_video(
+        chemin_video=chemin_video,
+        titre=script_data['titre'],
+        description=description,
+        tags=tags
+    )
 
     return chemin_video, script_data
 
