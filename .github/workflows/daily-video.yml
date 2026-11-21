@@ -2,8 +2,9 @@ name: Observateur Actif - Video Quotidienne
 
 on:
   schedule:
-    - cron: '0 8 * * *' # Tous les jours à 8h00 UTC
-  workflow_dispatch: # Pour lancer manuellement
+    # Exécution tous les jours à 8h00 UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Permet de lancer manuellement depuis l'onglet Actions
 
 jobs:
   build-video:
@@ -29,11 +30,12 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python main.py
 
-      - name: 📤 Sauvegarde de la vidéo en artifact
+      - name: 📤 Sauvegarde de la vidéo en artifact (téléchargeable)
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() # Sauvegarde même en cas d'erreur, pour pouvoir analyser les logs
         with:
           name: short-observateur-actif
           path: output/
