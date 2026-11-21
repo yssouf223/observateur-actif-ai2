@@ -22,20 +22,20 @@ Fournis la réponse UNIQUEMENT sous la forme d'un objet JSON valide, avec la str
 }}
 """
 
-    max_retries = 4
+    max_retries = 5
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
-                model="gemini-3.8-flash",
+                model="gemini-1.5-flash",  # Modèle plus stable
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json"),
             )
             return json.loads(response.text)
             
         except (ServerError, httpx.RemoteProtocolError, httpx.TimeoutException) as e:
-            print(f"⚠️ Problème réseau ou serveur Gemini surchargé (Essai {attempt + 1}/{max_retries}). Attente de 15 secondes...")
+            print(f"⚠️ Problème réseau ou serveur Gemini surchargé (Essai {attempt + 1}/{max_retries}). Attente de 30 secondes...")
             print(f"   Détail : {type(e).__name__}")
             if attempt == max_retries - 1:
                 print("❌ Abandon après plusieurs tentatives. Réessaie plus tard.")
                 raise e
-            time.sleep(15)
+            time.sleep(30)  # Attente plus longue
