@@ -24,7 +24,7 @@ Fournis la réponse UNIQUEMENT sous la forme d'un objet JSON valide, avec la str
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
-                model="gemini-3.8-flash",
+                model="gemini-3.8-flash", # Modèle confirmé par l'erreur précédente
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json"),
             )
@@ -33,5 +33,6 @@ Fournis la réponse UNIQUEMENT sous la forme d'un objet JSON valide, avec la str
         except ServerError as e:
             print(f"⚠️ Serveur Gemini surchargé (Essai {attempt + 1}/{max_retries}). Attente de 15 secondes...")
             if attempt == max_retries - 1:
+                print("❌ Abandon après plusieurs tentatives. Réessaie plus tard.")
                 raise e
             time.sleep(15)
