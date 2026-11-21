@@ -19,5 +19,4 @@ SUJETS = [
 ]
 
 def choisir_sujet():
-    """Choisit un sujet aléatoire dans la liste."""
     return random.choice(SUJETS)
