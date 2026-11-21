@@ -1,18 +1,9 @@
-# Dossiers de sortie (fichiers générés, pas besoin de les versionner)
 output/
-
-# Environnement Python
 venv/
 env/
 __pycache__/
 *.pyc
-
-# Fichiers de configuration locale (ne jamais committer de clés !)
 .env
-
-# Fichiers système
 .DS_Store
 Thumbs.db
-
-# Fichiers temporaires de MoviePy
 temp-audio.m4a
