@@ -1,45 +1,73 @@
 import os
-import requests
+import asyncio
+from putergenai import PuterClient
 import time
-import urllib.parse
 
-def chercher_visuels(mots_cles, nombre_par_mot=1):
+# On utilise le modèle "pollinations-image" qui est fiable et gratuit.
+# Tu peux essayer d'autres modèles comme "dall-e-3" ou "flux" si tu le souhaites.
+MODELE_IMAGE = "pollinations-image" 
+
+async def _generer_une_image(client, prompt, chemin_sortie):
+    """Fonction interne pour générer une seule image."""
+    try:
+        print(f"🎨 Génération de l'image pour : '{prompt}'...")
+        # L'appel à l'API de Puter
+        image_url = await client.ai_txt2img(prompt, model=MODELE_IMAGE)
+        
+        # On télécharge l'image à partir de l'URL retournée
+        import requests
+        response = requests.get(image_url, timeout=60)
+        if response.status_code == 200:
+            with open(chemin_sortie, 'wb') as f:
+                f.write(response.content)
+            print(f"✅ Image sauvegardée : {chemin_sortie}")
+            return chemin_sortie
+        else:
+            print(f"⚠️ Impossible de télécharger l'image depuis {image_url}")
+            return None
+    except Exception as e:
+        print(f"❌ Erreur lors de la génération pour '{prompt}': {e}")
+        return None
+
+async def chercher_visuels(mots_cles):
     """
-    Génère et télécharge des images via l'API gratuite et anonyme de Pollinations.ai.
-    Prend une liste de mots-clés (en anglais) et génère une image pour chacun.
+    Génère des images via Puter.js en utilisant les identifiants stockés
+    dans les variables d'environnement PUTER_USERNAME et PUTER_PASSWORD.
     """
     chemins_images = []
     os.makedirs("output/visuels", exist_ok=True)
 
-    for i, mot in enumerate(mots_cles):
-        # On construit un prompt un peu plus descriptif pour guider l'IA
-        prompt = f"{mot}, style sombre et mystérieux, éclairage cinématographique, haute qualité"
-        prompt_encode = urllib.parse.quote(prompt)
-        
-        # L'URL de base de l'API Pollinations (pas de clé nécessaire)
-        # On force une taille carrée (1024x1024) qui sera ensuite adaptée
-        url_image = f"https://image.pollinations.ai/prompt/{prompt_encode}?width=1024&height=1024&nologo=false&seed={i}"
+    # Récupération des identifiants depuis les variables d'environnement
+    username = os.environ.get("PUTER_USERNAME")
+    password = os.environ.get("PUTER_PASSWORD")
+    
+    if not username or not password:
+        print("❌ ERREUR : Les identifiants Puter (PUTER_USERNAME, PUTER_PASSWORD) ne sont pas définis.")
+        return []
 
+    # Initialisation et connexion au client Puter
+    async with PuterClient() as client:
         try:
-            print(f"🎨 Génération de l'image pour : '{mot}'...")
-            response = requests.get(url_image, timeout=60) # Timeout un peu long car la génération peut prendre du temps
-            
-            if response.status_code == 200:
-                chemin_image = f"output/visuels/img_generee_{i}.jpg"
-                with open(chemin_image, 'wb') as f:
-                    f.write(response.content)
-                chemins_images.append(chemin_image)
-                print(f"✅ Image générée et sauvegardée : {chemin_image}")
-            else:
-                print(f"⚠️ Échec de la génération (code {response.status_code}) pour '{mot}'")
-        
+            print("🔑 Connexion à Puter...")
+            await client.login(username, password)
+            print("✅ Connexion réussie.")
         except Exception as e:
-            print(f"❌ Erreur lors de la génération pour '{mot}': {e}")
+            print(f"❌ Échec de la connexion à Puter : {e}")
+            return []
 
-        # Pause obligatoire de 15 secondes entre chaque requête pour respecter la limite
-        # On ne fait la pause que s'il reste des mots-clés à traiter
-        if i < len(mots_cles) - 1:
-            print("⏳ Pause de 15 secondes pour respecter la limite de l'API...")
-            time.sleep(15)
+        # Boucle sur chaque mot-clé pour générer une image
+        for i, mot in enumerate(mots_cles):
+            # On enrichit le prompt pour un style visuel cohérent avec ta chaîne
+            prompt = f"{mot}, style sombre et mystérieux, éclairage cinématographique, haute qualité, illustration"
+            
+            chemin_image = f"output/visuels/img_generee_{i}.jpg"
+            resultat = await _generer_une_image(client, prompt, chemin_image)
+            
+            if resultat:
+                chemins_images.append(resultat)
+
+            # Petite pause pour ne pas surcharger l'API (même si le "User-Pays" gère ça)
+            if i < len(mots_cles) - 1:
+                time.sleep(3) # Pause de 3 secondes
 
     return chemins_images
