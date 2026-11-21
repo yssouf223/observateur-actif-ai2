@@ -24,13 +24,13 @@ async def pipeline_creation_video():
     script_data = generer_script(sujet)
     print(f"✍️ Script généré : {script_data['titre']}")
 
-    # 3. Génération de la voix off
+    # 3. Génération de la voix off (async)
     chemin_audio = "output/voix.mp3"
     await generer_voix(script_data['script'], chemin_audio)
     print(f"🎙️ Voix off générée : {chemin_audio}")
 
-    # 4. Génération des visuels avec Puter
-    chemins_visuels = await chercher_visuels(script_data['mots_cles_visuels'])
+    # 4. Génération des visuels avec Pollinations (synchrone, donc pas de await ici)
+    chemins_visuels = chercher_visuels(script_data['mots_cles_visuels'])
     print(f"🖼️ {len(chemins_visuels)} visuels générés")
 
     if not chemins_visuels:
