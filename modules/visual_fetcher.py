@@ -4,24 +4,21 @@ import time
 import urllib.parse
 
 def chercher_visuels(mots_cles):
-    """
-    Génère et télécharge des images via l'API gratuite et anonyme de Pollinations.ai.
-    Prend une liste de mots-clés (en anglais) et génère une image pour chacun.
-    """
     chemins_images = []
     os.makedirs("output/visuels", exist_ok=True)
 
-    for i, mot in enumerate(mots_cles):
-        # On construit un prompt descriptif pour guider l'IA
+    # On s'assure d'avoir au moins 6 mots-clés
+    while len(mots_cles) < 6:
+        mots_cles.append("Africa mystery dark cinematic")
+
+    for i, mot in enumerate(mots_cles[:6]): # On limite à 6 images max
         prompt = f"{mot}, style sombre et mystérieux, éclairage cinématographique, haute qualité"
         prompt_encode = urllib.parse.quote(prompt)
-        
-        # L'URL de l'API Pollinations (pas de clé nécessaire)
-        url_image = f"https://image.pollinations.ai/prompt/{prompt_encode}?width=1024&height=1024&nologo=true&seed={i}"
+        url_image = f"https://image.pollinations.ai/prompt/{prompt_encode}?width=1080&height=1920&nologo=true&seed={i}"
 
         try:
-            print(f"🎨 Génération de l'image pour : '{mot}'...")
-            response = requests.get(url_image, timeout=60)
+            print(f"🎨 Génération de l'image {i+1}/6 : '{mot}'...")
+            response = requests.get(url_image, timeout=45)
             
             if response.status_code == 200:
                 chemin_image = f"output/visuels/img_generee_{i}.jpg"
@@ -30,14 +27,10 @@ def chercher_visuels(mots_cles):
                 chemins_images.append(chemin_image)
                 print(f"✅ Image sauvegardée : {chemin_image}")
             else:
-                print(f"⚠️ Échec de la génération (code {response.status_code}) pour '{mot}'")
-        
+                print(f"⚠️ Échec pour '{mot}'")
         except Exception as e:
-            print(f"❌ Erreur lors de la génération pour '{mot}': {e}")
+            print(f"❌ Erreur : {e}")
 
-        # Pause de 5 secondes entre chaque requête pour respecter les limites
-        if i < len(mots_cles) - 1:
-            print("⏳ Pause de 5 secondes...")
-            time.sleep(5)
+        time.sleep(2) # Petite pause
 
     return chemins_images
