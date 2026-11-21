@@ -16,6 +16,9 @@ async def pipeline_creation_video():
     """Pipeline principal pour créer une vidéo Short."""
     print(f"🚀 Démarrage du pipeline - {datetime.now()}")
 
+    # 💡 LA CORRECTION EST ICI : On crée le dossier output dès le début
+    os.makedirs("output", exist_ok=True)
+
     # 1. Choix du sujet
     sujet = choisir_sujet()
     print(f"📖 Sujet choisi : {sujet}")
@@ -24,12 +27,12 @@ async def pipeline_creation_video():
     script_data = generer_script(sujet)
     print(f"✍️ Script généré : {script_data['titre']}")
 
-    # 3. Génération de la voix off (async)
+    # 3. Génération de la voix off
     chemin_audio = "output/voix.mp3"
     await generer_voix(script_data['script'], chemin_audio)
     print(f"🎙️ Voix off générée : {chemin_audio}")
 
-    # 4. Génération des visuels avec Pollinations (synchrone, donc pas de await ici)
+    # 4. Génération des visuels avec Pollinations
     chemins_visuels = chercher_visuels(script_data['mots_cles_visuels'])
     print(f"🖼️ {len(chemins_visuels)} visuels générés")
 
