@@ -1,10 +1,8 @@
 import asyncio
 import os
-import json
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Import des modules personnalisés
 from modules.story_fetcher import choisir_sujet
 from modules.script_generator import generer_script
 from modules.voice_generator import generer_voix
@@ -31,9 +29,12 @@ async def pipeline_creation_video():
     await generer_voix(script_data['script'], chemin_audio)
     print(f"🎙️ Voix off générée : {chemin_audio}")
 
-    # 4. Récupération des visuels
-    chemins_visuels = chercher_visuels(script_data['mots_cles_visuels'])
-    print(f"🖼️ {len(chemins_visuels)} visuels récupérés")
+    # 4. Génération des visuels avec Puter
+    chemins_visuels = await chercher_visuels(script_data['mots_cles_visuels'])
+    print(f"🖼️ {len(chemins_visuels)} visuels générés")
+
+    if not chemins_visuels:
+        raise Exception("❌ Aucune image générée, arrêt du pipeline.")
 
     # 5. Assemblage de la vidéo
     chemin_video = "output/short_final.mp4"
@@ -43,6 +44,4 @@ async def pipeline_creation_video():
     return chemin_video, script_data
 
 if __name__ == "__main__":
-    # Pour l'exécution locale, on lance le pipeline
-    # Le workflow GitHub Actions fera de même en appelant ce script
     asyncio.run(pipeline_creation_video())
