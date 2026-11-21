@@ -2,7 +2,7 @@ name: Observateur Actif - Video Quotidienne
 
 on:
   schedule:
-    # Exécution tous les jours à 8h00 UTC (9h à Paris en hiver, 10h en été)
+    # Exécution tous les jours à 8h00 UTC
     - cron: '0 8 * * *'
   workflow_dispatch: # Permet de lancer manuellement depuis l'onglet Actions
 
@@ -19,8 +19,8 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: 🎬 Installation de FFmpeg (requis par MoviePy)
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: 🎬 Installation de FFmpeg, ImageMagick et Police
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
 
       - name: 📦 Installation des dépendances Python
         run: pip install -r requirements.txt
@@ -28,12 +28,11 @@ jobs:
       - name: 🚀 Exécution du pipeline de création vidéo
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          PUTER_TOKEN: ${{ secrets.PUTER_TOKEN }}
         run: python main.py
 
-      - name: 📤 Sauvegarde de la vidéo en artifact (téléchargeable)
+      - name: 📤 Sauvegarde de la vidéo en artifact
         uses: actions/upload-artifact@v4
-        if: always() # Sauvegarde même en cas d'erreur, pour debug
+        if: always()
         with:
           name: short-observateur-actif
           path: output/
