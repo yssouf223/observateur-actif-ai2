@@ -94,4 +94,4 @@ def chercher_visuels(mots_cles):
             time.sleep(2)
 
     print(f"🖼️ Total : {len(chemins)} images récupérées.")
-    return chemins
+    return chemins 
