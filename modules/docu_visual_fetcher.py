@@ -30,9 +30,8 @@ def _generer_image(prompt, i):
 
 def chercher_visuels_docu(mots_cles):
     os.makedirs("output/visuels_docu", exist_ok=True)
-    total_images = 100 # 100 images pour le documentaire
+    total_images = 100
     
-    # On répète les mots-clés pour avoir 100 prompts
     base = list(mots_cles) if mots_cles else ["Africa documentary"]
     while len(base) < total_images:
         base.extend(mots_cles)
@@ -49,10 +48,9 @@ def chercher_visuels_docu(mots_cles):
             return chemin
         return None
 
-    # On utilise 2 workers pour ne pas surcharger l'API
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         for res in ex.map(process, range(total_images)):
             if res: chemins.append(res)
-            time.sleep(1) # Pause pour respecter le rate limit
+            time.sleep(1)
             
     return chemins
