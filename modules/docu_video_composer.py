@@ -62,4 +62,4 @@ def assembler_video_docu(chemins_images, chemin_audio, chemin_sortie, titre):
     video_composite.write_videofile(
         chemin_sortie, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast"
     )
-    return chemin_sortie
+    return chemin_sortie 
