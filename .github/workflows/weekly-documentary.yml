@@ -1,0 +1,45 @@
+name: Observateur Actif - Documentaire Hebdomadaire
+
+on:
+  schedule:
+    # Tous les samedis à 6h00 UTC (le 6 à la fin signifie Samedi)
+    - cron: '0 6 * * 6'
+  workflow_dispatch: # Pour tester manuellement
+
+jobs:
+  build-docu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180 # On donne 3h max car 100 images + 20 min de vidéo = très lourd
+
+    steps:
+      - name: 📥 Récupération du code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Installation de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🎬 Installation FFmpeg, ImageMagick et Police
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
+
+      - name: 📦 Installation des dépendances
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Exécution du pipeline Documentaire
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: python main_docu.py
+
+      - name: 📤 Sauvegarde de la vidéo
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentaire-observateur-actif
+          path: output/
+          retention-days: 7
