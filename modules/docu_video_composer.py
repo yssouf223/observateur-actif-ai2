@@ -49,8 +49,8 @@ def assembler_video_docu(chemins_images, chemin_audio, chemin_sortie, titre):
     if musiques:
         musique = AudioFileClip(random.choice(musiques))
         if musique.duration < duree_totale:
-            boucles = int(duree_totale / musique.duration) + 1
-            musique = concatenate_videoclips([musique] * boucles).with_duration(duree_totale)
+            # ✅ LA CORRECTION EST ICI : On utilise afx.AudioLoop pour l'audio
+            musique = musique.with_effects([afx.AudioLoop(duration=duree_totale)])
         else:
             musique = musique.subclipped(0, duree_totale)
             
