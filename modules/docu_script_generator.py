@@ -43,4 +43,4 @@ Fournis la réponse UNIQUEMENT sous forme d'objet JSON :
             except Exception as e:
                 derniere_erreur = e
                 break
-    raise derniere_erreur 
+    raise derniere_erreur
