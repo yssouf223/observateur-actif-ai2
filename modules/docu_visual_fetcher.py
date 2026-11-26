@@ -1,54 +1,61 @@
 import os
 import requests
 import time
+import base64
 import concurrent.futures
 
-HF_TOKEN = os.environ.get("HF_TOKEN")
-HF_API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+CF_ACCOUNT_ID = os.environ.get("CF_ACCOUNT_ID")
+CF_API_TOKEN = os.environ.get("CF_API_TOKEN")
+CF_MODEL = "@cf/black-forest-labs/flux-1-schnell"
 
-def _generer_image_hf(prompt, i):
-    """Génère une image 16:9 via Hugging Face (FLUX.1-schnell)."""
-    if not HF_TOKEN:
-        print("❌ ERREUR : Le token HF_TOKEN n'est pas défini.")
-        return None
-
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    # On force les dimensions pour le format 16:9 (1920x1080)
+def _generer_image_cloudflare(prompt, i):
+    url = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}/ai/run/{CF_MODEL}"
+    headers = {"Authorization": f"Bearer {CF_API_TOKEN}"}
+    # Format 16:9 forcé (1920x1080)
     payload = {
-        "inputs": f"{prompt}, cinematic documentary style, highly detailed, 16:9",
-        "parameters": {"width": 1920, "height": 1080}
+        "prompt": f"{prompt}, cinematic documentary style, highly detailed, 16:9",
+        "steps": 4
     }
-
-    for attempt in range(3):
+    
+    for attempt in range(2): # 2 tentatives max par image
         try:
-            print(f"🎨 Génération de l'image {i+1}/60 via Hugging Face...")
-            response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=120)
-
+            print(f"🎨 Génération Cloudflare pour l'image {i+1}/60...")
+            response = requests.post(url, headers=headers, json=payload, timeout=90)
             if response.status_code == 200:
-                return response.content  # L'image est renvoyée en bytes
-            elif response.status_code == 503:
-                print(f"⏳ Modèle en cours de chargement (Image {i+1}). Attente de 30s...")
-                time.sleep(30)
-            else:
-                print(f"⚠️ Échec HTTP {response.status_code} pour l'image {i+1}.")
-                time.sleep(5)
+                data = response.json()
+                if data.get("success") and "result" in data and "image" in data["result"]:
+                    return base64.b64decode(data["result"]["image"])
+            elif response.status_code == 429:
+                print(f"⏳ Limite Cloudflare atteinte (Image {i+1}). Pause de 10s...")
+                time.sleep(10)
         except Exception as e:
             print(f"❌ Erreur réseau pour l'image {i+1}: {e}")
-            time.sleep(10)
+            time.sleep(5)
+            
+    # 🛡️ Image de secours si Cloudflare échoue
+    print(f"🔄 Basculement sur l'image de secours pour la {i+1}...")
+    try:
+        r = requests.get(f"https://picsum.photos/1920/1080?random={i}", timeout=20)
+        if r.status_code == 200:
+            return r.content
+    except:
+        pass
     return None
 
 def chercher_visuels_docu(mots_cles):
     os.makedirs("output/visuels_docu", exist_ok=True)
-    total_images = 60  # Réduit à 60 images comme demandé
-
+    
+    # ✅ On passe à 60 images comme demandé
+    total_images = 60 
+    
     base = list(mots_cles) if mots_cles else ["Africa documentary"]
     while len(base) < total_images:
         base.extend(mots_cles)
-
+    
     chemins = []
-
+    
     def process(i):
-        contenu = _generer_image_hf(base[i], i)
+        contenu = _generer_image_cloudflare(base[i], i)
         if contenu:
             chemin = f"output/visuels_docu/img_{i}.jpg"
             with open(chemin, 'wb') as f:
@@ -57,11 +64,11 @@ def chercher_visuels_docu(mots_cles):
             return chemin
         return None
 
-    # On utilise 2 workers pour ne pas surcharger l'API, avec une pause entre chaque
+    # 2 workers en parallèle pour la rapidité, avec une petite pause
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         for res in ex.map(process, range(total_images)):
             if res: chemins.append(res)
-            time.sleep(2)  # Petite pause pour respecter les limites
-
+            time.sleep(1.5) 
+            
     print(f"🖼️ Total : {len(chemins)} images sur {total_images}.")
     return chemins
