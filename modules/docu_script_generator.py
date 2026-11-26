@@ -12,13 +12,13 @@ def generer_script_docu():
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
     
     prompt = """Tu es un réalisateur de documentaires pour la chaîne YouTube "Observateur Actif".
-Écris un script de 20 minutes (environ 2500 mots) sur un mystère, une histoire insolite ou une légende méconnue d'Afrique.
+Écris un script de 20 minutes (environ 3000 mots) sur un mystère, une histoire insolite ou une légende méconnue d'Afrique.
 Structure ton récit avec une introduction captivante, 3 chapitres distincts, et une conclusion.
 Le ton doit être grave, sérieux, documentaire et immersif.
 Fournis la réponse UNIQUEMENT sous forme d'objet JSON :
 {
     "titre": "Un titre accrocheur pour le documentaire",
-    "script": "Le texte complet du script (2500 mots)",
+    "script": "Le texte complet du script (3000 mots)",
     "mots_cles_visuels": ["une liste de 15 mots-clés en anglais pour générer des images"]
 }
 """
