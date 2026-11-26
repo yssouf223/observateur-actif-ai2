@@ -9,7 +9,7 @@ on:
 jobs:
   build-docu:
     runs-on: ubuntu-latest
-    timeout-minutes: 180 # On donne 3h max car 100 images + 20 min de vidéo = très lourd
+    timeout-minutes: 180 # On donne 3h de sécurité car 60 images + 20 min de vidéo = très lourd
 
     steps:
       - name: 📥 Récupération du code
@@ -31,6 +31,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
