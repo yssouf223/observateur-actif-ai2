@@ -5,7 +5,8 @@ import urllib.parse
 import concurrent.futures
 
 def _generer_image_pollinations(prompt, i):
-    prompt_encode = urllib.parse.quote(f"{prompt}, cinematic documentary style, 16:9")
+    # On force le format 1920x1080 (16:9)
+    prompt_encode = urllib.parse.quote(f"{prompt}, cinematic documentary style, highly detailed")
     url = f"https://image.pollinations.ai/prompt/{prompt_encode}?width=1920&height=1080&nologo=true&seed={i}"
     
     try:
@@ -39,9 +40,10 @@ def chercher_visuels_docu(mots_cles):
             return chemin
         return None
 
+    # 2 workers en parallèle pour ne pas surcharger Pollinations
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         for res in ex.map(process, range(total_images)):
             if res: chemins.append(res)
-            time.sleep(5)  # Pause de 5s pour respecter la limite de Pollinations
+            time.sleep(5)  # Pause de 5s entre chaque image
             
     return chemins
