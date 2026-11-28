@@ -1,7 +1,7 @@
 name: Observateur Actif - Documentaire Hebdomadaire
 
 on:
-  schedule:
+  schedule:yyyyyuuu
     - cron: '0 6 * * 6'
   workflow_dispatch:
 
